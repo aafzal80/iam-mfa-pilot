@@ -1,0 +1,6 @@
+"Time","User","App","ClientAppUsed","IsLegacyClient","ConditionalAccessStatus","ErrorCode","Detail"
+"8/10/2025 3:17:19 AM","ahmadafzal@trianglenc.onmicrosoft.com","Azure Portal","Browser","False","notApplied","0","MFA completed in Azure AD"
+"8/9/2025 7:41:19 AM","ahmadafzal@trianglenc.onmicrosoft.com","Azure Portal","Browser","False","notApplied","0","MFA completed in Azure AD"
+"8/9/2025 6:41:23 AM","ahmadafzal@trianglenc.onmicrosoft.com","Azure Portal","Browser","False","notApplied","0","MFA requirement satisfied by claim in the token"
+"8/9/2025 6:14:00 AM","ahmadafzal@trianglenc.onmicrosoft.com","Azure Portal","Browser","False","notApplied","0","MFA requirement satisfied by claim in the token"
+"8/9/2025 6:13:56 AM","ahmadafzal@trianglenc.onmicrosoft.com","Azure Portal","Browser","False","notApplied","50140","This is an expected part of the login flow, where a user is asked if they want to remain signed into this browser to make further logins easier. For more details, see https://techcommunity.microsoft.com/t5/microsoft-entra/the-new-azure-ad-sign-in-and-keep-me-signed-in-experiences/td-p/128267"
