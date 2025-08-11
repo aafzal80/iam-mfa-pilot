@@ -173,6 +173,111 @@ The pilot can disable them temporarily; Rollback.ps1 restores your baseline quic
 
 Do I need P2?
 No—only if you’re adding risk-based or Identity Protection policies. P1 is sufficient for this pilot.
+## Troubleshooting & Known Issues
+
+Use this guide to resolve the most common setup and rollout hiccups. Each item includes **symptom → cause → fix → verify**.
+
+### 1) `Authorization_RequestDenied` or “insufficient privileges”
+**Symptom:** `Connect-MgGraph` succeeds, but CA or sign-in log calls fail.  
+**Cause:** Missing delegated scopes.  
+**Fix:**
+```powershell
+Disconnect-MgGraph
+Connect-MgGraph -Scopes "Policy.ReadWrite.ConditionalAccess","Policy.Read.All","AuditLog.Read.All"
+
+Verify:
+
+Get-MgIdentityConditionalAccessPolicy -All | Select DisplayName,State | Format-Table
+
+2) Security Defaults conflict
+
+Symptom: Policies don’t evaluate as expected or the portal warns about Security Defaults.
+Cause: Security Defaults enabled alongside Conditional Access.
+Fix:
+
+.\scripts\Toggle-CAPolicies.ps1 -Mode ReportOnly   # or -Mode On
+.\scripts\Rollback.ps1 -ReEnableSecurityDefaults   # restore baseline fast
+
+Verify: Entra → Identity → Properties → Manage security defaults shows Disabled during the pilot.
+3) Break-glass not excluded (potential lockout)
+
+Symptom: Admins challenged unexpectedly or can’t access the portal.
+Cause: Emergency access accounts not excluded from CA.
+Fix: Ensure at least two break-glass accounts exist and are excluded from all pilot policies.
+Verify: What-If on a break-glass UPN shows No applicable policies.
+4) “Invalid IP range” when creating a named location
+
+Symptom: BadRequest on named location creation.
+Cause: Improper CIDR or unsupported IPv6 format.
+Fix: Use a narrow corp/VPN egress CIDR (e.g., 203.0.113.10/32 or 203.0.113.0/29). Avoid home ISP ranges.
+Verify:
+
+Get-MgIdentityConditionalAccessNamedLocation | Select DisplayName,IpRanges
+
+5) Sign-in logs are empty or 403
+
+Symptom: Metrics return no rows or permission errors.
+Cause: Missing AuditLog.Read.All or too narrow time window.
+Fix:
+
+Connect-MgGraph -Scopes "AuditLog.Read.All"
+$since=(Get-Date).AddHours(-48)
+Get-MgAuditLogSignIn -All -Filter "createdDateTime ge $($since.ToString('o'))" | Select-Object -First 1
+
+Verify: At least one recent sign-in appears; rerun the before/after metrics.
+6) “Why does SMTP AUTH still work?”
+
+Symptom: Legacy SMTP continues after CA rollout.
+Cause: SMTP AUTH is managed in Exchange Online, not CA.
+Fix:
+
+Set-TransportConfig -SmtpClientAuthenticationDisabled $true
+Set-CASMailbox -Identity <user> -SmtpClientAuthenticationDisabled $false
+
+7) Module install/import errors
+
+Symptom: Install-Module or Import-Module fails.
+Cause: Missing prerequisites, TLS, or execution policy.
+Fix:
+
+Install-Module Microsoft.Graph -Scope CurrentUser -Force
+Set-ExecutionPolicy -Scope Process Bypass -Force
+
+Verify:
+
+Get-Module Microsoft.Graph* -ListAvailable
+
+8) Throttling: TooManyRequests
+
+Symptom: Graph calls intermittently fail.
+Cause: API throttling on large/rapid queries.
+Fix: Use SDK paging, smaller batches, and backoff:
+
+Start-Sleep -Seconds 3
+
+9) Policy propagation delay
+
+Symptom: What-If or tests don’t reflect a recent change.
+Cause: Directory propagation.
+Fix: Wait 5–15 minutes; re-test with What-If and one real sign-in.
+Verify: Sign-in record shows updated appliedConditionalAccessPolicies.
+10) “Policy already exists” / duplicate names
+
+Symptom: Re-running setup creates duplicates.
+Cause: Non-idempotent creation by display name only.
+Fix:
+
+Get-MgIdentityConditionalAccessPolicy -All |
+  Where-Object {$_.DisplayName -like "MFA Pilot*"} |
+  ForEach-Object { Remove-MgIdentityConditionalAccessPolicy -ConditionalAccessPolicyId $_.Id -Confirm:$false }
+
+Tips for cleaner runs
+
+    Use What-If before flipping Report-only → On.
+
+    Keep the trusted named location truly pilot-only; remove it in cleanup.
+
+    Commit only sanitized CSVs/screenshots (no real UPNs, tenant IDs, or IPs).
 Contributing
 
 Issues and PRs are welcome. Please sanitize any logs or screenshots (no real UPNs, tenant IDs, or IPs).
