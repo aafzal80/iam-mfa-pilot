@@ -1,3 +1,70 @@
+## Requirements
+- **Microsoft Entra ID P1** (for Conditional Access)  
+- **P2 only if** you plan to add risk-based or Identity Protection policies (not required for this pilot)
+- PowerShell 7+, Microsoft Graph PowerShell SDK
+
+## Preflight checklist (recommended)
+- [ ] **Two break-glass accounts** exist, excluded from CA policies, with permanent Global Admin and long, non-expiring passwords (or hardware keys)
+- [ ] **Security Defaults** status noted (enabled/disabled)
+- [ ] A **canary pilot group** (small, non-privileged users) exists
+- [ ] A **temporary named location** (narrow IP range) is defined for testing only
+- [ ] Exchange Online **SMTP AUTH** decision made (disable tenant-wide, or scoped exceptions)
+- [ ] Metrics destination selected (Sign-in logs via Graph; optional CA insights workbook)
+
+## Permissions & consent (least privilege)
+When prompted by `Connect-MgGraph`, consent to:
+- `Policy.ReadWrite.ConditionalAccess` – manage CA policies and named locations  
+- `Policy.Read.All` – read CA policies & named locations  
+- `AuditLog.Read.All` – read sign-in logs for before/after metrics  
+> If your tenant requires admin consent, an Entra admin must approve these scopes once.
+
+## Security Defaults vs. Conditional Access
+Security Defaults and Conditional Access aren’t designed to run together.  
+The setup scripts can **disable Security Defaults** to allow CA policy creation.  
+If anything fails, run **Rollback.ps1** (below) to remove pilot artifacts and optionally **re-enable Security Defaults**.
+
+## Pilot flow (what this repo implements)
+1. Create a **canary group** and **temporary trusted location**  
+2. Deploy CA policies in **Report-only**  
+3. Validate with the **What-If** tool (Entra admin center → Security → Conditional Access → What-If)  
+4. Flip policies to **On** for the canary group  
+5. Pull **baseline vs. post-enable** metrics from Sign-in logs  
+6. If clean: widen scope; if not: **rollback**
+
+## Measurement & reporting
+- Scripts pull sign-ins from Microsoft Graph (`/auditLogs/signIns`) for the last 24h **before** and **after** enforcement  
+- Consider also using the **Conditional Access insights & reporting** workbook for a visual cross-check  
+- Watch for:
+  - % of canary users with successful interactive sign-ins
+  - MFA prompt rate / failure rate
+  - `appliedConditionalAccessPolicies` to verify policy effect
+
+## Trusted named location (pilot-only)
+A narrow **temporary** named location reduces prompt fatigue during testing.  
+- Keep the range tight (e.g., test VPN egress)  
+- Avoid home ISP ranges (dynamic/IPv6)  
+- Remove this location in **cleanup**
+
+## Legacy/Basic auth note (SMTP AUTH)
+Blocking legacy protocols with CA helps, but SMTP AUTH is controlled in **Exchange Online**:  
+- Prefer: `Set-TransportConfig -SmtpClientAuthenticationDisabled $true` tenant-wide  
+- Then allow per-mailbox only where truly required:  
+  `Set-CASMailbox -Identity <user> -SmtpClientAuthenticationDisabled $false`
+
+## Break-glass account guidance
+- Maintain **at least two** emergency access accounts  
+- Exclude them from CA policies and **never** use for daily work  
+- Assign **permanent Global Admin**; no mailbox; strong unique credentials or hardware keys  
+- **Monitor**: alert on any sign-in for these accounts
+
+## Rollback (safe exit)
+Use `scripts/Rollback.ps1` to unwind the pilot:
+1. **Disable** the pilot CA policies  
+2. **Delete** the temporary named location  
+3. **Remove** the canary group (if created for the pilot)  
+4. (Optional) **Re-enable Security Defaults** if that’s your baseline
+
+
 # MFA Everywhere (Pilot) – Conditional Access with a Safety Net
 
 ## What This Project Is  
