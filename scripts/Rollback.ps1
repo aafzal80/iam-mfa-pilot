@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 aafzal80
 <#
 .SYNOPSIS
   Safely rolls back MFA pilot artifacts created by this repo.
