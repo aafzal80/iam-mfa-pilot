@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 aafzal80
 <#
 .SYNOPSIS
 Connects to Microsoft Graph with the correct scopes for this project.
