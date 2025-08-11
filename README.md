@@ -2,6 +2,8 @@
 - **Microsoft Entra ID P1** (for Conditional Access)  
 - **P2 only if** you plan to add risk-based or Identity Protection policies (not required for this pilot)
 - PowerShell 7+, Microsoft Graph PowerShell SDK
+- > **Licensing:** Conditional Access requires **Microsoft Entra ID P1**. **P2 only** if you plan to use risk-based/Identity Protection features (not required for this pilot).
+
 
 ## Preflight checklist (recommended)
 - [ ] **Two break-glass accounts** exist, excluded from CA policies, with permanent Global Admin and long, non-expiring passwords (or hardware keys)
@@ -15,7 +17,16 @@
 When prompted by `Connect-MgGraph`, consent to:
 - `Policy.ReadWrite.ConditionalAccess` – manage CA policies and named locations  
 - `Policy.Read.All` – read CA policies & named locations  
-- `AuditLog.Read.All` – read sign-in logs for before/after metrics  
+- `AuditLog.Read.All` – read sign-in logs for before/after metrics
+- **Graph delegated scopes used by this pilot**
+- `Policy.ReadWrite.ConditionalAccess` — manage CA policies and named locations
+- `Policy.Read.All` — read CA policies & named locations
+- `AuditLog.Read.All` — read sign-in logs for before/after metrics
+
+Example:
+```powershell
+Connect-MgGraph -Scopes "Policy.ReadWrite.ConditionalAccess","Policy.Read.All","AuditLog.Read.All"
+
 > If your tenant requires admin consent, an Entra admin must approve these scopes once.
 
 ## Security Defaults vs. Conditional Access
@@ -42,7 +53,8 @@ If anything fails, run **Rollback.ps1** (below) to remove pilot artifacts and op
 ## Trusted named location (pilot-only)
 A narrow **temporary** named location reduces prompt fatigue during testing.  
 - Keep the range tight (e.g., test VPN egress)  
-- Avoid home ISP ranges (dynamic/IPv6)  
+- Avoid home ISP ranges (dynamic/IPv6)
+- **Trusted test egress (pilot-only):** use a **narrow corporate/VPN egress** range to reduce prompt fatigue; **avoid home ISP ranges** (dynamic/IPv6). Remove this location during **cleanup**.
 - Remove this location in **cleanup**
 
 ## Legacy/Basic auth note (SMTP AUTH)
