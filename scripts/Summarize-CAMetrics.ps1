@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 aafzal80
 <#
 .SYNOPSIS
 Compares before/after CSVs and writes a summary report with a resume bullet.
