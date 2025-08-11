@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 aafzal80
 <#
 .SYNOPSIS
 Creates the canary group, trusted named location, and three CA policies in Report-only.
