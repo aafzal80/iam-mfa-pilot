@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 aafzal80
 <#
 .SYNOPSIS
 Enables/disables specified CA policies. Pre-checks Security Defaults and can disable it on request.
